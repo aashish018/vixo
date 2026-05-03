@@ -1,0 +1,28 @@
+# Backend
+backend/target/
+backend/data/
+*.class
+*.jar
+*.war
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Uploads
+uploads/*.jpg
+uploads/*.jpeg
+uploads/*.png
+uploads/*.webp
+uploads/*.gif
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.DS_Store
+Thumbs.db
+
+# Logs
+*.log

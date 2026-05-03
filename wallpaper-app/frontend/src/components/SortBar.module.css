@@ -1,0 +1,35 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.count {
+  color: var(--text3);
+  font-size: 0.85rem;
+}
+.options {
+  display: flex;
+  gap: 4px;
+}
+.btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text3);
+  font-size: 0.8rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  transition: all var(--transition);
+}
+.btn:hover { color: var(--text2); background: var(--surface); border-color: var(--border); }
+.btn.active {
+  color: var(--accent2);
+  background: rgba(124,106,247,0.12);
+  border-color: rgba(124,106,247,0.3);
+}
