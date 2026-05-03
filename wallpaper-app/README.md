@@ -42,7 +42,6 @@ wallpaper-app/
 - **Java 17+** (check: `java -version`)
 - **Maven 3.6+** (check: `mvn -version`)
 - **Node.js 18+** (check: `node -version`)
-
 ---
 
 ## 🚀 Running the Backend
