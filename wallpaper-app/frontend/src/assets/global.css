@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap');
 
 *,
 *::before,
@@ -8,22 +8,21 @@
 
 :root {
   color-scheme: dark;
-  --bg: #040a15;
-  --bg-elevated: #09111f;
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-strong: rgba(255, 255, 255, 0.08);
+  --bg: #070b11;
+  --bg-soft: #0c1118;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-strong: rgba(255, 255, 255, 0.07);
   --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.12);
-  --accent: #73e6ff;
-  --accent-warm: #ff8a65;
-  --accent-contrast: #071019;
-  --text-primary: #f6fbff;
-  --text-secondary: #c7d6e6;
-  --text-muted: #8ea3b9;
-  --text-faint: #60738c;
-  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.32);
-  --font-display: 'Outfit', sans-serif;
-  --font-body: 'Space Grotesk', sans-serif;
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #f5f7fa;
+  --text-secondary: #c7d0da;
+  --text-muted: #8c99a8;
+  --text-faint: #697689;
+  --accent: #f0ede7;
+  --accent-dark: #121821;
+  --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
 }
 
 html {
@@ -36,26 +35,13 @@ body {
   font-family: var(--font-body);
   color: var(--text-primary);
   background:
-    radial-gradient(circle at top, rgba(115, 230, 255, 0.12), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(255, 138, 101, 0.12), transparent 28%),
-    var(--bg);
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.05), transparent 24%),
+    linear-gradient(180deg, #0a0f16 0%, #070b11 32%, #05080d 100%);
   -webkit-font-smoothing: antialiased;
 }
 
 #root {
   min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
 a {
@@ -64,8 +50,8 @@ a {
 }
 
 img {
-  max-width: 100%;
   display: block;
+  max-width: 100%;
 }
 
 button,
@@ -94,16 +80,16 @@ textarea::placeholder {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.11) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.35s linear infinite;
+  animation: shimmer 1.25s linear infinite;
 }
 
 .spinner {
   width: 1rem;
   height: 1rem;
   border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.24);
+  border: 2px solid rgba(255, 255, 255, 0.22);
   border-top-color: currentColor;
   animation: spin 0.8s linear infinite;
 }
@@ -120,7 +106,7 @@ textarea::placeholder {
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;

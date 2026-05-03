@@ -102,8 +102,8 @@ export default function HomePage() {
 
   const heroStats = [
     { label: 'Live collection', value: `${total || featured.length || 0}+`, icon: ImageIcon },
-    { label: 'Fresh uploads', value: 'Cloudinary', icon: Flame },
-    { label: 'Optimized UX', value: 'Mobile first', icon: Compass },
+    { label: 'Curated delivery', value: 'Cloudinary', icon: Flame },
+    { label: 'Browsing feel', value: 'Editorial', icon: Compass },
   ]
 
   return (
@@ -113,7 +113,7 @@ export default function HomePage() {
           <div className={styles.kicker}>Modern wallpaper discovery</div>
           <h1>{headline}</h1>
           <p>
-            Browse cinematic backgrounds, minimal compositions, and vivid mobile-ready artwork delivered through a faster production-ready stack.
+            A quieter, more image-first gallery for cinematic backgrounds, minimal compositions, and desktop-worthy visuals that feel collected, not cluttered.
           </p>
           <div className={styles.heroStats}>
             {heroStats.map(({ label, value, icon: Icon }) => (

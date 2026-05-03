@@ -14,7 +14,7 @@ export default function Footer() {
             <div className={styles.brandTitle}>Wallpaper<span>Vault</span></div>
           </div>
           <p className={styles.copy}>
-            Premium wallpaper discovery with Cloudinary-backed delivery, faster API responses, and a mobile-first browsing experience.
+            A minimal wallpaper library with a calmer browsing rhythm, faster delivery, and production-ready uploads.
           </p>
         </div>
 

@@ -41,8 +41,8 @@ export default function Navbar() {
         </form>
 
         <nav className={styles.links}>
-          <Link to="/" className={location.pathname === '/' ? styles.active : ''}>Discover</Link>
-          <Link to="/admin" className={location.pathname === '/admin' ? styles.active : ''}>Studio</Link>
+          <Link to="/" className={location.pathname === '/' ? styles.active : ''}>Explore</Link>
+          <Link to="/admin" className={location.pathname === '/admin' ? styles.active : ''}>Submit</Link>
         </nav>
 
         <button
@@ -66,8 +66,8 @@ export default function Navbar() {
               placeholder="Search the collection"
             />
           </form>
-          <Link to="/" onClick={() => setMenuOpen(false)}>Discover</Link>
-          <Link to="/admin" onClick={() => setMenuOpen(false)}>Studio</Link>
+          <Link to="/" onClick={() => setMenuOpen(false)}>Explore</Link>
+          <Link to="/admin" onClick={() => setMenuOpen(false)}>Submit</Link>
         </div>
       )}
     </header>

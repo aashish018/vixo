@@ -8,6 +8,7 @@ export default function WallpaperCard({ wallpaper, priority = false }) {
   const [loaded, setLoaded] = useState(false)
   const [hasError, setHasError] = useState(false)
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.15 })
+  const ratio = wallpaper.id % 3 === 0 ? 'portrait' : wallpaper.id % 3 === 1 ? 'square' : 'landscape'
 
   return (
     <article ref={ref} className={styles.card}>
@@ -19,6 +20,7 @@ export default function WallpaperCard({ wallpaper, priority = false }) {
             alt={wallpaper.title}
             loading="lazy"
             className={`${styles.image} ${loaded ? styles.visible : ''}`}
+            style={{ aspectRatio: ratio === 'portrait' ? '4 / 5.2' : ratio === 'square' ? '1 / 1' : '4 / 3' }}
             onLoad={() => setLoaded(true)}
             onError={() => {
               if (hasError) {
