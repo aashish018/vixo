@@ -32,6 +32,9 @@ public class Wallpaper {
     @Column(length = 1000)
     private String thumbnailUrl;
 
+    @Column(length = 255)
+    private String publicId;
+
     @NotBlank(message = "Category is required")
     @Column(nullable = false)
     private String category;

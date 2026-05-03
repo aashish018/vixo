@@ -1,66 +1,57 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Download, Eye, Tag } from 'lucide-react'
+import { Download, Eye, Star } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 import styles from './WallpaperCard.module.css'
 
-export default function WallpaperCard({ wallpaper, index = 0 }) {
+export default function WallpaperCard({ wallpaper, priority = false }) {
   const [loaded, setLoaded] = useState(false)
-  const [error, setError] = useState(false)
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.05 })
-
-  const delay = Math.min(index % 6 * 0.05, 0.3)
+  const [hasError, setHasError] = useState(false)
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.15 })
 
   return (
-    <div
-      ref={ref}
-      className={styles.card}
-      style={{ animationDelay: `${delay}s` }}
-    >
-      <Link to={`/wallpaper/${wallpaper.id}`} className={styles.imageWrapper}>
-        {/* Skeleton */}
-        {!loaded && !error && <div className={`${styles.skeleton} skeleton`} />}
-
-        {/* Lazy image */}
-        {inView && (
+    <article ref={ref} className={styles.card}>
+      <Link to={`/wallpaper/${wallpaper.id}`} className={styles.media}>
+        {!loaded && <div className={`${styles.skeleton} skeleton`} />}
+        {(inView || priority) && (
           <img
-            src={error ? '/placeholder.svg' : wallpaper.thumbnailUrl || wallpaper.imageUrl}
+            src={hasError ? wallpaper.imageUrl : wallpaper.thumbnailUrl || wallpaper.imageUrl}
             alt={wallpaper.title}
+            loading="lazy"
             className={`${styles.image} ${loaded ? styles.visible : ''}`}
             onLoad={() => setLoaded(true)}
-            onError={() => { setError(true); setLoaded(true); }}
-            loading="lazy"
+            onError={() => {
+              if (hasError) {
+                setLoaded(true)
+                return
+              }
+              setHasError(true)
+            }}
           />
         )}
-
-        {/* Overlay */}
         <div className={styles.overlay}>
+          <div className={styles.category}>{wallpaper.category}</div>
+          {wallpaper.featured && (
+            <div className={styles.featured}>
+              <Star size={12} />
+              Featured
+            </div>
+          )}
           <div className={styles.stats}>
             <span><Eye size={12} /> {(wallpaper.viewCount || 0).toLocaleString()}</span>
             <span><Download size={12} /> {(wallpaper.downloadCount || 0).toLocaleString()}</span>
           </div>
         </div>
-
-        {/* Category badge */}
-        <div className={styles.categoryBadge}>{wallpaper.category}</div>
-
-        {/* Featured indicator */}
-        {wallpaper.featured && <div className={styles.featured}>★ Featured</div>}
       </Link>
 
-      <div className={styles.info}>
+      <div className={styles.content}>
         <Link to={`/wallpaper/${wallpaper.id}`} className={styles.title}>
           {wallpaper.title}
         </Link>
-        {wallpaper.tags && (
-          <div className={styles.tags}>
-            <Tag size={11} />
-            {wallpaper.tags.split(',').slice(0,3).map(t => (
-              <span key={t} className={styles.tag}>{t.trim()}</span>
-            ))}
-          </div>
-        )}
+        <p className={styles.meta}>
+          {wallpaper.resolution || 'High resolution'} · {wallpaper.description || 'Optimized for desktop and mobile screens'}
+        </p>
       </div>
-    </div>
+    </article>
   )
 }

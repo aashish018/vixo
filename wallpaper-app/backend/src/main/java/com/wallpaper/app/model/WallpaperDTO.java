@@ -16,6 +16,7 @@ public class WallpaperDTO {
     private String title;
     private String imageUrl;
     private String thumbnailUrl;
+    private String publicId;
     private String category;
     private String tags;
     private String resolution;
@@ -31,6 +32,7 @@ public class WallpaperDTO {
                 .title(w.getTitle())
                 .imageUrl(w.getImageUrl())
                 .thumbnailUrl(w.getThumbnailUrl() != null ? w.getThumbnailUrl() : w.getImageUrl())
+                .publicId(w.getPublicId())
                 .category(w.getCategory())
                 .tags(w.getTags())
                 .resolution(w.getResolution())

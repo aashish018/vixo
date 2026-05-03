@@ -1,71 +1,75 @@
-import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, Menu, X, Layers } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Menu, Search, Sparkles, X } from 'lucide-react'
 import styles from './Navbar.module.css'
 
 export default function Navbar() {
-  const [query, setQuery] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('search') || '')
+  const [menuOpen, setMenuOpen] = useState(false)
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (query.trim()) {
-      navigate(`/?search=${encodeURIComponent(query.trim())}`)
-      setMenuOpen(false)
-    }
+  useEffect(() => {
+    setQuery(searchParams.get('search') || '')
+  }, [searchParams])
+
+  const submitSearch = event => {
+    event.preventDefault()
+    const nextQuery = query.trim()
+    navigate(nextQuery ? `/?search=${encodeURIComponent(nextQuery)}` : '/')
+    setMenuOpen(false)
   }
 
   return (
-    <nav className={styles.nav}>
-      <div className={styles.inner}>
-        {/* Logo */}
+    <header className={styles.header}>
+      <div className={styles.shell}>
         <Link to="/" className={styles.logo}>
-          <Layers size={22} strokeWidth={2} />
-          <span>Wallpaper<strong>Vault</strong></span>
+          <span className={styles.logoBadge}><Sparkles size={16} /></span>
+          <span className={styles.logoText}>WallpaperVault</span>
         </Link>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className={styles.searchForm}>
+        <form className={styles.search} onSubmit={submitSearch}>
           <Search size={16} className={styles.searchIcon} />
           <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="Search wallpapers..."
+            type="search"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={event => setQuery(event.target.value)}
+            placeholder="Search landscapes, neon, minimal..."
+            aria-label="Search wallpapers"
           />
         </form>
 
-        {/* Desktop links */}
-        <div className={styles.links}>
-          <Link to="/" className={location.pathname === '/' ? styles.active : ''}>Browse</Link>
-          <Link to="/admin" className={location.pathname === '/admin' ? styles.active : ''}>Admin</Link>
-        </div>
+        <nav className={styles.links}>
+          <Link to="/" className={location.pathname === '/' ? styles.active : ''}>Discover</Link>
+          <Link to="/admin" className={location.pathname === '/admin' ? styles.active : ''}>Studio</Link>
+        </nav>
 
-        {/* Mobile hamburger */}
-        <button className={styles.burger} onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        <button
+          type="button"
+          className={styles.menuButton}
+          onClick={() => setMenuOpen(open => !open)}
+          aria-label="Toggle navigation"
+        >
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div className={styles.mobileMenu}>
-          <form onSubmit={handleSearch} className={styles.mobileSearch}>
-            <Search size={15} />
+          <form className={styles.mobileSearch} onSubmit={submitSearch}>
+            <Search size={16} className={styles.searchIcon} />
             <input
-              type="text"
-              placeholder="Search wallpapers..."
+              type="search"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Search the collection"
             />
           </form>
-          <Link to="/" onClick={() => setMenuOpen(false)}>Browse</Link>
-          <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin Panel</Link>
+          <Link to="/" onClick={() => setMenuOpen(false)}>Discover</Link>
+          <Link to="/admin" onClick={() => setMenuOpen(false)}>Studio</Link>
         </div>
       )}
-    </nav>
+    </header>
   )
 }

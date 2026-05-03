@@ -1,49 +1,66 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getWallpaper, trackDownload } from '../utils/api.js'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Download, ExternalLink, Eye, Grid2x2, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { getWallpaper, trackDownload } from '../utils/api.js'
 import styles from './WallpaperDetailPage.module.css'
-import {
-  Download, ArrowLeft, Tag, Monitor, Eye,
-  TrendingDown, Star, Calendar, ExternalLink
-} from 'lucide-react'
 
 export default function WallpaperDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [wallpaper, setWallpaper] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [imgLoaded, setImgLoaded] = useState(false)
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    setImgLoaded(false)
+
     getWallpaper(id)
-      .then(setWallpaper)
-      .catch(() => toast.error('Wallpaper not found'))
-      .finally(() => setLoading(false))
+      .then(data => {
+        if (!cancelled) setWallpaper(data)
+      })
+      .catch(error => {
+        if (!cancelled) {
+          toast.error(error.userMessage)
+          setWallpaper(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [id])
+
+  const createdAt = useMemo(() => {
+    if (!wallpaper?.createdAt) return 'Recently added'
+    return new Date(wallpaper.createdAt).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }, [wallpaper])
+
+  const tags = wallpaper?.tags?.split(',').map(item => item.trim()).filter(Boolean) || []
 
   const handleDownload = async () => {
     if (!wallpaper) return
     setDownloading(true)
     try {
-      await trackDownload(wallpaper.id)
-
-      // Download via anchor
-      const a = document.createElement('a')
-      a.href = wallpaper.imageUrl
-      a.download = `${wallpaper.title.replace(/\s+/g,'_')}.jpg`
-      a.target = '_blank'
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-
-      toast.success('Download started!')
-    } catch {
-      toast.error('Download failed. Please try again.')
+      const response = await trackDownload(wallpaper.id)
+      const anchor = document.createElement('a')
+      anchor.href = response.imageUrl
+      anchor.target = '_blank'
+      anchor.rel = 'noopener noreferrer'
+      anchor.download = `${wallpaper.title.replace(/\s+/g, '-').toLowerCase()}.jpg`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+    } catch (error) {
+      toast.error(error.userMessage)
     } finally {
       setDownloading(false)
     }
@@ -51,9 +68,9 @@ export default function WallpaperDetailPage() {
 
   if (loading) {
     return (
-      <div className={styles.loadingPage}>
+      <div className={styles.loading}>
         <div className="spinner" />
-        <p>Loading wallpaper...</p>
+        <span>Loading wallpaper</span>
       </div>
     )
   }
@@ -61,141 +78,87 @@ export default function WallpaperDetailPage() {
   if (!wallpaper) {
     return (
       <div className={styles.notFound}>
-        <h2>Wallpaper not found</h2>
-        <Link to="/" className={styles.backBtn}><ArrowLeft size={16}/> Back to gallery</Link>
+        <h1>Wallpaper not found</h1>
+        <button type="button" className={styles.backButton} onClick={() => navigate('/')}>
+          Back to collection
+        </button>
       </div>
     )
   }
 
-  const tags = wallpaper.tags ? wallpaper.tags.split(',').map(t => t.trim()) : []
-  const createdDate = wallpaper.createdAt
-    ? new Date(wallpaper.createdAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
-    : null
-
-  // Update document title / meta for SEO
-  document.title = `${wallpaper.title} — WallpaperVault`
-
   return (
     <div className={styles.page}>
-      {/* Back */}
-      <div className={styles.topBar}>
-        <button className={styles.backBtn} onClick={() => navigate(-1)}>
-          <ArrowLeft size={16} /> Back
+      <div className={styles.topbar}>
+        <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
+          <ArrowLeft size={16} />
+          Back
         </button>
-        <Link
-          to={`/?category=${encodeURIComponent(wallpaper.category)}`}
-          className={styles.categoryLink}
-        >
+        <Link to={`/?category=${encodeURIComponent(wallpaper.category)}`} className={styles.categoryLink}>
           {wallpaper.category}
         </Link>
       </div>
 
       <div className={styles.layout}>
-        {/* Image */}
-        <div className={styles.imageSection}>
-          <div className={styles.imageWrapper}>
-            {!imgLoaded && <div className={`${styles.imgSkeleton} skeleton`} />}
-            <img
-              src={wallpaper.imageUrl}
-              alt={wallpaper.title}
-              className={`${styles.image} ${imgLoaded ? styles.imgVisible : ''}`}
-              onLoad={() => setImgLoaded(true)}
-              onError={e => { e.target.style.opacity = 1 }}
-            />
+        <section className={styles.imagePanel}>
+          <img src={wallpaper.imageUrl} alt={wallpaper.title} className={styles.image} />
+        </section>
+
+        <aside className={styles.sidebar}>
+          <div className={styles.badges}>
+            {wallpaper.featured && <span className={styles.badge}>Featured</span>}
+            <span className={styles.badgeSoft}>{createdAt}</span>
           </div>
 
-          {/* Ad slot beside/below image */}
-          <div className={styles.adSlot}>
-            📢 Ad Placeholder (300×250) — Replace with AdSense
-          </div>
-        </div>
+          <h1>{wallpaper.title}</h1>
+          <p className={styles.description}>
+            {wallpaper.description || 'A high-resolution wallpaper optimized for polished desktop and mobile setups.'}
+          </p>
 
-        {/* Info panel */}
-        <div className={styles.panel}>
-          {wallpaper.featured && (
-            <div className={styles.featuredBadge}>
-              <Star size={12} /> Featured
-            </div>
-          )}
-
-          <h1 className={styles.title}>{wallpaper.title}</h1>
-
-          {wallpaper.description && (
-            <p className={styles.description}>{wallpaper.description}</p>
-          )}
-
-          {/* Stats */}
           <div className={styles.stats}>
-            <div className={styles.stat}>
-              <Eye size={15} /> <span>{(wallpaper.viewCount || 0).toLocaleString()}</span>
-              <small>Views</small>
+            <div>
+              <Eye size={16} />
+              <strong>{(wallpaper.viewCount || 0).toLocaleString()}</strong>
+              <span>Views</span>
             </div>
-            <div className={styles.stat}>
-              <Download size={15} /> <span>{(wallpaper.downloadCount || 0).toLocaleString()}</span>
-              <small>Downloads</small>
+            <div>
+              <Download size={16} />
+              <strong>{(wallpaper.downloadCount || 0).toLocaleString()}</strong>
+              <span>Downloads</span>
             </div>
-            {wallpaper.resolution && (
-              <div className={styles.stat}>
-                <Monitor size={15} /> <span>{wallpaper.resolution}</span>
-                <small>Resolution</small>
-              </div>
-            )}
-          </div>
-
-          {/* Meta */}
-          <div className={styles.meta}>
-            {createdDate && (
-              <div className={styles.metaRow}>
-                <Calendar size={14} /> <span>{createdDate}</span>
-              </div>
-            )}
-            <div className={styles.metaRow}>
-              <Monitor size={14} />
-              <Link to={`/?category=${encodeURIComponent(wallpaper.category)}`} className={styles.catLink}>
-                {wallpaper.category}
-              </Link>
+            <div>
+              <Grid2x2 size={16} />
+              <strong>{wallpaper.resolution || 'Auto'}</strong>
+              <span>Resolution</span>
             </div>
           </div>
 
-          {/* Tags */}
+          <div className={styles.actions}>
+            <button type="button" className={styles.primaryButton} onClick={handleDownload} disabled={downloading}>
+              {downloading ? <div className="spinner" /> : <Download size={16} />}
+              {downloading ? 'Starting download...' : 'Download original'}
+            </button>
+            <a href={wallpaper.imageUrl} target="_blank" rel="noopener noreferrer" className={styles.secondaryButton}>
+              <ExternalLink size={16} />
+              Open full image
+            </a>
+          </div>
+
           {tags.length > 0 && (
-            <div className={styles.tagsSection}>
-              <div className={styles.tagsLabel}><Tag size={13} /> Tags</div>
+            <div className={styles.tagsBlock}>
+              <div className={styles.tagsTitle}>
+                <Tag size={15} />
+                Tags
+              </div>
               <div className={styles.tags}>
-                {tags.map(t => (
-                  <Link
-                    key={t}
-                    to={`/?search=${encodeURIComponent(t)}`}
-                    className={styles.tag}
-                  >
-                    {t}
+                {tags.map(tag => (
+                  <Link key={tag} to={`/?search=${encodeURIComponent(tag)}`} className={styles.tag}>
+                    {tag}
                   </Link>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Download buttons */}
-          <div className={styles.actions}>
-            <button
-              className={styles.downloadBtn}
-              onClick={handleDownload}
-              disabled={downloading}
-            >
-              {downloading ? <div className="spinner" /> : <Download size={18} />}
-              {downloading ? 'Downloading...' : 'Download HD'}
-            </button>
-
-            <a
-              href={wallpaper.imageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.openBtn}
-            >
-              <ExternalLink size={16} /> Open Original
-            </a>
-          </div>
-        </div>
+        </aside>
       </div>
     </div>
   )

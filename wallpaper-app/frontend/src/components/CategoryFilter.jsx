@@ -2,30 +2,35 @@ import { useEffect, useState } from 'react'
 import { getCategories } from '../utils/api.js'
 import styles from './CategoryFilter.module.css'
 
-const DEFAULT_CATEGORIES = ['All', 'Nature', 'Urban', 'AI Art', 'AMOLED', 'Minimal', 'Bikes', 'Space']
+const DEFAULT_CATEGORIES = ['All', 'Nature', 'Urban', 'Minimal', 'Space', 'Abstract']
 
 export default function CategoryFilter({ selected, onChange }) {
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
 
   useEffect(() => {
     getCategories()
-      .then(cats => setCategories(['All', ...cats]))
+      .then(items => setCategories(['All', ...items]))
       .catch(() => setCategories(DEFAULT_CATEGORIES))
   }, [])
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.scroll}>
-        {categories.map(cat => (
-          <button
-            key={cat}
-            className={`${styles.chip} ${selected === cat || (cat === 'All' && !selected) ? styles.active : ''}`}
-            onClick={() => onChange(cat === 'All' ? '' : cat)}
-          >
-            {cat}
-          </button>
-        ))}
+    <section className={styles.section}>
+      <div className={styles.label}>Categories</div>
+      <div className={styles.row}>
+        {categories.map(category => {
+          const active = selected === category || (!selected && category === 'All')
+          return (
+            <button
+              key={category}
+              type="button"
+              className={`${styles.chip} ${active ? styles.active : ''}`}
+              onClick={() => onChange(category === 'All' ? '' : category)}
+            >
+              {category}
+            </button>
+          )
+        })}
       </div>
-    </div>
+    </section>
   )
 }

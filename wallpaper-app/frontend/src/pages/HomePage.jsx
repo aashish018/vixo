@@ -1,174 +1,196 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { getWallpapers } from '../utils/api.js'
+import { useEffect, useMemo, useState } from 'react'
+import { useInView } from 'react-intersection-observer'
+import { Link, useSearchParams } from 'react-router-dom'
+import { ArrowRight, Compass, Flame, ImageIcon } from 'lucide-react'
+import { getFeatured, getWallpapers } from '../utils/api.js'
 import WallpaperCard from '../components/WallpaperCard.jsx'
 import CategoryFilter from '../components/CategoryFilter.jsx'
 import SortBar from '../components/SortBar.jsx'
 import styles from './HomePage.module.css'
-import { ChevronLeft, ChevronRight, Frown } from 'lucide-react'
 
 const PAGE_SIZE = 12
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [wallpapers, setWallpapers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [totalItems, setTotalItems] = useState(0)
-  const [totalPages, setTotalPages] = useState(0)
-
   const category = searchParams.get('category') || ''
-  const search   = searchParams.get('search')   || ''
-  const sort     = searchParams.get('sort')      || 'latest'
-  const page     = parseInt(searchParams.get('page') || '0', 10)
+  const search = searchParams.get('search') || ''
+  const sort = searchParams.get('sort') || 'latest'
 
-  const updateParam = useCallback((key, value) => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (value) next.set(key, value); else next.delete(key)
-      if (key !== 'page') next.delete('page')
-      return next
-    }, { replace: true })
-  }, [setSearchParams])
-
-  const setPage = useCallback((p) => {
-    setSearchParams(prev => {
-      const next = new URLSearchParams(prev)
-      if (p === 0) next.delete('page'); else next.set('page', p)
-      return next
-    }, { replace: true })
-  }, [setSearchParams])
+  const [items, setItems] = useState([])
+  const [featured, setFeatured] = useState([])
+  const [page, setPage] = useState(0)
+  const [hasNext, setHasNext] = useState(true)
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState('')
+  const { ref, inView } = useInView({ threshold: 0.2 })
 
   useEffect(() => {
+    getFeatured().then(setFeatured).catch(() => setFeatured([]))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    setError(null)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setError('')
+    setItems([])
+    setPage(0)
+    setHasNext(true)
 
-    getWallpapers({ category, search, sort, page, size: PAGE_SIZE })
+    getWallpapers({ category, search, sort, page: 0, size: PAGE_SIZE })
       .then(data => {
-        setWallpapers(data.content || [])
-        setTotalItems(data.totalItems || 0)
-        setTotalPages(data.totalPages || 0)
+        if (cancelled) return
+        setItems(data.content || [])
+        setHasNext(Boolean(data.hasNext))
+        setTotal(data.totalElements || 0)
       })
-      .catch(() => setError('Failed to load wallpapers. Is the backend running?'))
-      .finally(() => setLoading(false))
-  }, [category, search, sort, page])
+      .catch(err => {
+        if (cancelled) return
+        setError(err.userMessage)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
-  const skeletons = Array.from({ length: PAGE_SIZE })
+    return () => {
+      cancelled = true
+    }
+  }, [category, search, sort])
+
+  useEffect(() => {
+    if (!inView || loading || loadingMore || !hasNext) return
+
+    let cancelled = false
+    const nextPage = page + 1
+    setLoadingMore(true)
+
+    getWallpapers({ category, search, sort, page: nextPage, size: PAGE_SIZE })
+      .then(data => {
+        if (cancelled) return
+        setItems(previous => [...previous, ...(data.content || [])])
+        setPage(nextPage)
+        setHasNext(Boolean(data.hasNext))
+        setTotal(data.totalElements || 0)
+      })
+      .catch(err => {
+        if (!cancelled) setError(err.userMessage)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMore(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [inView, loading, loadingMore, hasNext, page, category, search, sort])
+
+  const updateParam = (key, value) => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace: true })
+  }
+
+  const headline = useMemo(() => {
+    if (search) return `Results for "${search}"`
+    if (category) return `${category} wallpapers`
+    return 'Curated wallpapers with a premium feel'
+  }, [category, search])
+
+  const heroStats = [
+    { label: 'Live collection', value: `${total || featured.length || 0}+`, icon: ImageIcon },
+    { label: 'Fresh uploads', value: 'Cloudinary', icon: Flame },
+    { label: 'Optimized UX', value: 'Mobile first', icon: Compass },
+  ]
 
   return (
     <div className={styles.page}>
-      {/* Hero */}
-      <div className={styles.hero}>
-        <h1 className={styles.heroTitle}>
-          {search
-            ? <>Results for <em>"{search}"</em></>
-            : category
-              ? <>{category} <span>Wallpapers</span></>
-              : <>Stunning <span>HD Wallpapers</span> — Free</>
-          }
-        </h1>
-        <p className={styles.heroSub}>Curated collection for desktop & mobile. Download in full resolution.</p>
-      </div>
-
-      {/* Ad placeholder top */}
-      <div className={styles.adBanner}>
-        📢 Ad Placeholder (728×90 Leaderboard) — Replace with AdSense
-      </div>
-
-      <div className={styles.container}>
-        {/* Filters */}
-        <CategoryFilter
-          selected={category || 'All'}
-          onChange={cat => updateParam('category', cat)}
-        />
-
-        <SortBar
-          sort={sort}
-          onChange={s => updateParam('sort', s)}
-          total={totalItems}
-        />
-
-        {/* Error */}
-        {error && (
-          <div className={styles.error}>
-            <Frown size={32} />
-            <p>{error}</p>
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <div className={styles.kicker}>Modern wallpaper discovery</div>
+          <h1>{headline}</h1>
+          <p>
+            Browse cinematic backgrounds, minimal compositions, and vivid mobile-ready artwork delivered through a faster production-ready stack.
+          </p>
+          <div className={styles.heroStats}>
+            {heroStats.map(({ label, value, icon: Icon }) => (
+              <div key={label} className={styles.heroStat}>
+                <Icon size={16} />
+                <strong>{value}</strong>
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
-        )}
-
-        {/* Grid */}
-        {!error && (
-          <div className={styles.grid}>
-            {loading
-              ? skeletons.map((_, i) => (
-                  <div key={i} className={`${styles.skeletonCard} skeleton`} />
-                ))
-              : wallpapers.length > 0
-                ? wallpapers.map((w, i) => (
-                    <WallpaperCard key={w.id} wallpaper={w} index={i} />
-                  ))
-                : (
-                  <div className={styles.empty}>
-                    <Frown size={48} color="var(--text3)" />
-                    <h3>No wallpapers found</h3>
-                    <p>Try a different category or search term.</p>
-                  </div>
-                )
-            }
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && !loading && (
-          <div className={styles.pagination}>
-            <button
-              className={styles.pageBtn}
-              onClick={() => setPage(page - 1)}
-              disabled={page === 0}
-            >
-              <ChevronLeft size={16} /> Prev
-            </button>
-
-            <div className={styles.pageNumbers}>
-              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-                let p
-                if (totalPages <= 7) {
-                  p = i
-                } else if (page < 4) {
-                  p = i
-                } else if (page > totalPages - 4) {
-                  p = totalPages - 7 + i
-                } else {
-                  p = page - 3 + i
-                }
-                return (
-                  <button
-                    key={p}
-                    className={`${styles.pageNum} ${p === page ? styles.pageNumActive : ''}`}
-                    onClick={() => setPage(p)}
-                  >
-                    {p + 1}
-                  </button>
-                )
-              })}
-            </div>
-
-            <button
-              className={styles.pageBtn}
-              onClick={() => setPage(page + 1)}
-              disabled={page >= totalPages - 1}
-            >
-              Next <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Ad placeholder bottom */}
-        <div className={styles.adBannerBottom}>
-          📢 Ad Placeholder (336×280 Rectangle) — Replace with AdSense
         </div>
+
+        <div className={styles.heroPanel}>
+          <div className={styles.heroPanelLabel}>Featured drop</div>
+          {featured.length > 0 ? (
+            featured.slice(0, 3).map(item => (
+              <Link key={item.id} to={`/wallpaper/${item.id}`} className={styles.featuredItem}>
+                <img src={item.thumbnailUrl || item.imageUrl} alt={item.title} />
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.category}</span>
+                </div>
+                <ArrowRight size={16} />
+              </Link>
+            ))
+          ) : (
+            <div className={`${styles.featuredSkeleton} skeleton`} />
+          )}
+        </div>
+      </section>
+
+      <div className={styles.filters}>
+        <CategoryFilter selected={category || 'All'} onChange={value => updateParam('category', value)} />
+        <SortBar sort={sort} onChange={value => updateParam('sort', value)} total={total} />
       </div>
+
+      {error && (
+        <div className={styles.errorCard}>
+          <h2>We could not load the gallery</h2>
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!error && loading && (
+        <section className={styles.grid}>
+          {Array.from({ length: PAGE_SIZE }).map((_, index) => (
+            <div key={index} className={styles.skeletonTile}>
+              <div className={`${styles.skeletonMedia} skeleton`} />
+              <div className={`${styles.skeletonText} skeleton`} />
+            </div>
+          ))}
+        </section>
+      )}
+
+      {!error && !loading && items.length === 0 && (
+        <div className={styles.emptyState}>
+          <h2>No wallpapers yet</h2>
+          <p>Try another search or category to widen the collection.</p>
+        </div>
+      )}
+
+      {!error && items.length > 0 && (
+        <>
+          <section className={styles.grid}>
+            {items.map((wallpaper, index) => (
+              <WallpaperCard key={`${wallpaper.id}-${index}`} wallpaper={wallpaper} priority={index < 4} />
+            ))}
+          </section>
+
+          <div ref={ref} className={styles.loadMore}>
+            {loadingMore && Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className={`${styles.loadBar} skeleton`} />
+            ))}
+            {!hasNext && <span>You reached the end of the collection.</span>}
+          </div>
+        </>
+      )}
     </div>
   )
 }

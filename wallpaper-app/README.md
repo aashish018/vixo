@@ -1,67 +1,43 @@
-# 🖼️ WallpaperVault — Full-Stack Wallpaper Web App
+# WallpaperVault
 
-A production-ready wallpaper web application built with **Java Spring Boot** (backend) and **React + Vite** (frontend), using **H2** as the database.
+Production-ready wallpaper application built with Spring Boot, PostgreSQL, Cloudinary, React, and Vite.
 
----
+## What changed
 
-## 🗂️ Project Structure
+- Premium mobile-first frontend with dark glassmorphism styling
+- Infinite scroll, lazy-loaded images, and skeleton loading states
+- Cloudinary-backed uploads for both remote image URLs and local files
+- PostgreSQL-first backend configuration
+- Per-IP rate limiting with Bucket4j: `100 requests / 10 minutes`
+- DTO-based paginated APIs, global exception handling, request validation, and caching
 
-```
-wallpaper-app/
-├── backend/                    # Spring Boot API
-│   ├── src/main/java/com/wallpaper/app/
-│   │   ├── WallpaperAppApplication.java
-│   │   ├── controller/         # REST endpoints
-│   │   ├── model/              # JPA entity + DTOs
-│   │   ├── repository/         # Spring Data JPA
-│   │   ├── service/            # Business logic
-│   │   └── config/             # CORS, seeder, web config
-│   ├── src/main/resources/
-│   │   └── application.properties
-│   └── pom.xml
-│
-├── frontend/                   # React + Vite app
-│   ├── src/
-│   │   ├── pages/              # HomePage, DetailPage, AdminPage
-│   │   ├── components/         # Navbar, WallpaperCard, Filters
-│   │   ├── utils/api.js        # Axios API layer
-│   │   └── assets/global.css  # Global dark-mode styles
-│   ├── index.html
-│   ├── vite.config.js
-│   └── package.json
-│
-├── uploads/                    # Local uploaded images stored here
-└── README.md
-```
+## Stack
 
----
+- Backend: Java 17, Spring Boot 3.2, Spring Data JPA, PostgreSQL, Bucket4j, Cloudinary, Caffeine Cache
+- Frontend: React 18, Vite 5, React Router, Axios, Lucide, react-intersection-observer, react-hot-toast
 
-## ⚡ Quick Start
+## Backend setup
 
-### Prerequisites
-- **Java 17+** (check: `java -version`)
-- **Maven 3.6+** (check: `mvn -version`)
-- **Node.js 18+** (check: `node -version`)
----
-
-## 🚀 Running the Backend
+1. Create a PostgreSQL database named `wallpaperdb`.
+2. Copy [backend/.env.example](backend/.env.example) values into your deployment environment or local shell.
+3. Set required Cloudinary credentials:
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+   - Optional: `CLOUDINARY_FOLDER`
+4. Run the backend:
 
 ```bash
 cd backend
 mvn spring-boot:run
 ```
 
-Backend starts at: **http://localhost:8080**
+Backend default URL: `http://localhost:8080`
 
-> First run auto-seeds the database with 10 sample wallpapers!
+## Frontend setup
 
-**H2 Console** (for debugging): http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:file:./data/wallpaperdb`
-- Username: `sa`, Password: *(empty)*
-
----
-
-## 🎨 Running the Frontend
+1. Copy [frontend/.env.example](frontend/.env.example) into `.env` if you want an explicit API base URL.
+2. Install dependencies and run Vite:
 
 ```bash
 cd frontend
@@ -69,203 +45,102 @@ npm install
 npm run dev
 ```
 
-Frontend starts at: **http://localhost:5173**
+Frontend default URL: `http://localhost:5173`
 
-> The Vite dev server proxies `/api` requests to the Spring Boot backend automatically.
+## Cloudinary setup guide
 
----
+1. Create a Cloudinary account at `https://cloudinary.com`.
+2. Open the Cloudinary dashboard.
+3. Copy your `Cloud Name`, `API Key`, and `API Secret`.
+4. Add them to the backend environment.
+5. Optional: set `CLOUDINARY_FOLDER=wallpaper-app` or another folder name to keep uploads organized.
+6. Start the backend and use either:
+   - `POST /api/wallpapers` with a remote `imageUrl`
+   - `POST /api/wallpapers/upload` with multipart file upload
+7. The backend uploads the asset to Cloudinary and stores the returned `imageUrl`, `thumbnailUrl`, and `publicId`.
 
-## 🌐 API Reference
+## Environment variables
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/wallpapers` | Get paginated wallpapers |
-| GET | `/api/wallpapers?category=Nature` | Filter by category |
-| GET | `/api/wallpapers?search=sunset` | Search by title/tags |
-| GET | `/api/wallpapers?sort=trending` | Sort (latest/trending/popular/oldest) |
-| GET | `/api/wallpapers?page=0&size=12` | Paginate |
-| GET | `/api/wallpapers/{id}` | Get wallpaper by ID |
-| POST | `/api/wallpapers` | Add via URL (JSON body) |
-| POST | `/api/wallpapers/upload` | Upload local file (multipart) |
-| POST | `/api/wallpapers/{id}/download` | Track download + get URL |
-| DELETE | `/api/wallpapers/{id}` | Delete wallpaper |
-| GET | `/api/wallpapers/categories` | List all categories |
-| GET | `/api/wallpapers/featured` | Get featured wallpapers |
+### Backend
 
-### Example: Add wallpaper via URL
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `SPRING_JPA_HIBERNATE_DDL_AUTO`
+- `CORS_ALLOWED_ORIGINS`
+- `CORS_ALLOWED_METHODS`
+- `APP_RATE_LIMIT_CAPACITY`
+- `APP_RATE_LIMIT_DURATION_MINUTES`
+- `APP_UPLOAD_MAX_FILE_SIZE`
+- `APP_UPLOAD_MAX_REQUEST_SIZE`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_FOLDER`
+- `APP_SEED_ENABLED`
+
+### Frontend
+
+- `VITE_API_BASE_URL`
+
+## API overview
+
+### Wallpapers
+
+- `GET /api/wallpapers?page=0&size=12&sort=latest`
+- `GET /api/wallpapers?category=Nature`
+- `GET /api/wallpapers?search=neon`
+- `GET /api/wallpapers/{id}`
+- `POST /api/wallpapers`
+- `POST /api/wallpapers/upload`
+- `POST /api/wallpapers/{id}/download`
+- `DELETE /api/wallpapers/{id}`
+- `GET /api/wallpapers/categories`
+- `GET /api/wallpapers/featured`
+
+### Example create-by-URL request
 
 ```bash
 curl -X POST http://localhost:8080/api/wallpapers \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Aurora Borealis",
-    "imageUrl": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80",
-    "thumbnailUrl": "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=600&q=70",
+    "title": "Aurora Skyline",
+    "imageUrl": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
     "category": "Nature",
-    "tags": "aurora, northern lights, sky, night",
-    "resolution": "1920x1080",
-    "description": "Stunning aurora borealis over snow-capped mountains",
+    "tags": "aurora,night,sky",
+    "resolution": "3840x2160",
+    "description": "Cold night tones with a sharp aurora horizon",
     "featured": true
   }'
 ```
 
----
+## Production notes
 
-## 🖼️ How to Add Wallpapers Using URLs
+- Rate limiting is in-memory, which is suitable for a single instance or moderate traffic. For multi-instance deployments, move the limiter state to Redis.
+- Caching uses Caffeine with a 10-minute TTL for wallpaper lists, detail responses, featured items, and categories.
+- `spring.jpa.open-in-view` is disabled to avoid lazy-loading surprises in production.
+- `server.forward-headers-strategy=framework` helps preserve real client IPs behind proxies so rate limiting works more reliably.
+- The backend now fails fast if Cloudinary credentials are missing.
 
-### Option 1: Admin Panel (Recommended)
-1. Open http://localhost:5173/admin
-2. Click **"Image URL"** tab
-3. Paste any image URL and fill in the details
-4. Click **Add Wallpaper**
-
-### Option 2: GitHub Raw Links
-Upload images to a GitHub repo and use the raw URL:
-```
-https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/wallpapers/my-image.jpg
-```
-
-### Option 3: Unsplash (Best for free HD images)
-```
-https://images.unsplash.com/photo-PHOTO_ID?w=1920&q=80        ← Full HD
-https://images.unsplash.com/photo-PHOTO_ID?w=600&q=70         ← Thumbnail
-```
-
-### Option 4: Google Drive
-1. Upload image to Google Drive
-2. Right-click → "Share" → "Anyone with the link"
-3. Get the file ID from the share URL
-4. Use: `https://drive.google.com/uc?export=view&id=YOUR_FILE_ID`
-
----
-
-## 🔄 Switching to MySQL (Production)
-
-1. Add MySQL dependency to `pom.xml`:
-```xml
-<dependency>
-    <groupId>com.mysql</groupId>
-    <artifactId>mysql-connector-j</artifactId>
-    <scope>runtime</scope>
-</dependency>
-```
-
-2. Update `application.properties`:
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/wallpaperdb?useSSL=false&allowPublicKeyRetrieval=true
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.datasource.username=root
-spring.datasource.password=yourpassword
-spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
-```
-
----
-
-## 💰 AdSense Integration
-
-AdSense placeholder divs are already in the UI. To activate:
-
-1. Get your AdSense code from https://adsense.google.com
-2. In `frontend/index.html`, uncomment and replace the script tag:
-```html
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ID" crossorigin="anonymous"></script>
-```
-3. Replace the placeholder divs in `HomePage.jsx` and `WallpaperDetailPage.jsx`:
-```jsx
-<ins className="adsbygoogle"
-  style={{display: 'block'}}
-  data-ad-client="ca-pub-YOUR_ID"
-  data-ad-slot="YOUR_SLOT_ID"
-  data-ad-format="auto"
-  data-full-width-responsive="true" />
-```
-
----
-
-## 🔍 SEO
-
-- Meta tags are in `frontend/index.html` (Open Graph, Twitter Card, description)
-- Page title updates dynamically on wallpaper detail pages
-- Categories generate SEO-friendly URLs: `/?category=Nature`
-- Search terms generate URLs: `/?search=sunset`
-
----
-
-## 🏗️ Build for Production
+## Build
 
 ### Backend
+
 ```bash
 cd backend
 mvn clean package -DskipTests
-java -jar target/wallpaper-app-1.0.0.jar
 ```
 
-### Render backend deploy
-
-If Render does not show a native `Java` runtime for this repository, deploy the backend with Docker:
-
-1. Create a new `Web Service` on Render.
-2. Connect this repository.
-3. Set `Root Directory` to `wallpaper-app/backend`.
-4. Set `Environment` to `Docker`.
-5. Leave the build and start commands empty because Render will use `backend/Dockerfile`.
-6. Add `CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com` in Render environment variables.
-7. Deploy.
-
-Notes:
-- The backend is inside a nested folder, so using the wrong root directory can prevent Render from detecting it correctly.
-- `server.port` now reads Render's `PORT` environment variable automatically.
-- H2 data and uploaded files inside the container are ephemeral on Render unless you attach persistent storage or move to a managed database.
-
 ### Frontend
+
 ```bash
 cd frontend
 npm run build
-# Output in frontend/dist/ — deploy to any static host (Netlify, Vercel, Nginx)
 ```
 
-### Serve frontend from Spring Boot (optional)
-Copy `frontend/dist/*` to `backend/src/main/resources/static/` and rebuild.
+## Deployment
 
----
+- Backend: build with the included [backend/Dockerfile](backend/Dockerfile)
+- Frontend: deploy `frontend/dist` to Vercel, Netlify, Nginx, or another static host
+- Set `CORS_ALLOWED_ORIGINS` to your frontend domain in production
 
-## ✨ Features
-
-| Feature | Status |
-|---------|--------|
-| Wallpaper grid with lazy loading | ✅ |
-| Category filtering | ✅ |
-| Search (title + tags) | ✅ |
-| Sorting (Latest, Trending, Popular, Oldest) | ✅ |
-| Pagination | ✅ |
-| Wallpaper detail page | ✅ |
-| Download HD + click tracking | ✅ |
-| Resolution display | ✅ |
-| Tags with search links | ✅ |
-| Admin: add via URL | ✅ |
-| Admin: local file upload | ✅ |
-| Admin: delete with confirmation | ✅ |
-| Dark mode UI | ✅ |
-| Mobile responsive | ✅ |
-| AdSense placeholders | ✅ |
-| SEO meta tags | ✅ |
-| Spring Cache | ✅ |
-| H2 persistent DB | ✅ |
-| 10 sample wallpapers (auto-seeded) | ✅ |
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: Java 17, Spring Boot 3.2, Spring Data JPA, Spring Cache, Lombok
-- **Database**: H2 (file-based, persistent)
-- **Frontend**: React 18, Vite 5, React Router 6, Axios, react-hot-toast
-- **Styling**: CSS Modules, CSS Variables (dark mode)
-- **Icons**: Lucide React
-- **Fonts**: Syne + DM Sans (Google Fonts)
-
----
-
-## 📝 License
-
-MIT — free to use and modify.
