@@ -200,6 +200,23 @@ mvn clean package -DskipTests
 java -jar target/wallpaper-app-1.0.0.jar
 ```
 
+### Render backend deploy
+
+If Render does not show a native `Java` runtime for this repository, deploy the backend with Docker:
+
+1. Create a new `Web Service` on Render.
+2. Connect this repository.
+3. Set `Root Directory` to `wallpaper-app/backend`.
+4. Set `Environment` to `Docker`.
+5. Leave the build and start commands empty because Render will use `backend/Dockerfile`.
+6. Add `CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com` in Render environment variables.
+7. Deploy.
+
+Notes:
+- The backend is inside a nested folder, so using the wrong root directory can prevent Render from detecting it correctly.
+- `server.port` now reads Render's `PORT` environment variable automatically.
+- H2 data and uploaded files inside the container are ephemeral on Render unless you attach persistent storage or move to a managed database.
+
 ### Frontend
 ```bash
 cd frontend
