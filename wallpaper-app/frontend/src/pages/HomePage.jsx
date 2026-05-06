@@ -18,7 +18,7 @@ export default function HomePage() {
 
   const [items, setItems] = useState([])
   const [featured, setFeatured] = useState([])
-  const [page, setPage] = useState(0)
+  const [nextPage, setNextPage] = useState(null)
   const [hasNext, setHasNext] = useState(true)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -35,7 +35,7 @@ export default function HomePage() {
     setLoading(true)
     setError('')
     setItems([])
-    setPage(0)
+    setNextPage(null)
     setHasNext(true)
 
     getWallpapers({ category, search, sort, page: 0, size: PAGE_SIZE })
@@ -43,6 +43,7 @@ export default function HomePage() {
         if (cancelled) return
         setItems(data.content || [])
         setHasNext(Boolean(data.hasNext))
+        setNextPage(data.nextPage ?? null)
         setTotal(data.totalElements || 0)
       })
       .catch(err => {
@@ -59,18 +60,17 @@ export default function HomePage() {
   }, [category, search, sort])
 
   useEffect(() => {
-    if (!inView || loading || loadingMore || !hasNext) return
+    if (!inView || loading || loadingMore || !hasNext || nextPage == null) return
 
     let cancelled = false
-    const nextPage = page + 1
     setLoadingMore(true)
 
     getWallpapers({ category, search, sort, page: nextPage, size: PAGE_SIZE })
       .then(data => {
         if (cancelled) return
         setItems(previous => [...previous, ...(data.content || [])])
-        setPage(nextPage)
         setHasNext(Boolean(data.hasNext))
+        setNextPage(data.nextPage ?? null)
         setTotal(data.totalElements || 0)
       })
       .catch(err => {
@@ -83,7 +83,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [inView, loading, loadingMore, hasNext, page, category, search, sort])
+  }, [inView, loading, loadingMore, hasNext, nextPage, category, search, sort])
 
   const updateParam = (key, value) => {
     setSearchParams(previous => {

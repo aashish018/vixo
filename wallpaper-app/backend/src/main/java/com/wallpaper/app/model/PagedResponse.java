@@ -11,7 +11,9 @@ public record PagedResponse<T>(
         long totalElements,
         int totalPages,
         boolean hasNext,
-        boolean hasPrevious
+        boolean hasPrevious,
+        Integer nextPage,
+        Integer previousPage
 ) {
     public static <T> PagedResponse<T> from(Page<T> page) {
         return new PagedResponse<>(
@@ -21,7 +23,9 @@ public record PagedResponse<T>(
                 page.getTotalElements(),
                 page.getTotalPages(),
                 page.hasNext(),
-                page.hasPrevious()
+                page.hasPrevious(),
+                page.hasNext() ? page.getNumber() + 1 : null,
+                page.hasPrevious() ? page.getNumber() - 1 : null
         );
     }
 }
