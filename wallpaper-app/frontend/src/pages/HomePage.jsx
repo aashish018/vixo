@@ -24,7 +24,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
-  const { ref, inView } = useInView({ threshold: 0.2 })
+  const { ref, inView } = useInView({ threshold: 0, rootMargin: '0px 0px 600px 0px' })
 
   useEffect(() => {
     getFeatured().then(setFeatured).catch(() => setFeatured([]))
@@ -61,9 +61,35 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!inView || loading || loadingMore || !hasNext || nextPage == null) return
+    setLoadingMore(true)
+  }, [inView, loading, loadingMore, hasNext, nextPage])
+
+  useEffect(() => {
+    if (loading || loadingMore || !hasNext || nextPage == null) return
+
+    const handleScroll = () => {
+      const scrollPosition = window.innerHeight + window.scrollY
+      const triggerPoint = document.documentElement.scrollHeight - 900
+
+      if (scrollPosition >= triggerPoint) {
+        setLoadingMore(current => current ? current : true)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('resize', handleScroll)
+    handleScroll()
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleScroll)
+    }
+  }, [loading, loadingMore, hasNext, nextPage])
+
+  useEffect(() => {
+    if (!loadingMore || loading || !hasNext || nextPage == null) return
 
     let cancelled = false
-    setLoadingMore(true)
 
     getWallpapers({ category, search, sort, page: nextPage, size: PAGE_SIZE })
       .then(data => {
@@ -83,7 +109,7 @@ export default function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [inView, loading, loadingMore, hasNext, nextPage, category, search, sort])
+  }, [loadingMore, loading, hasNext, nextPage, category, search, sort])
 
   const updateParam = (key, value) => {
     setSearchParams(previous => {
