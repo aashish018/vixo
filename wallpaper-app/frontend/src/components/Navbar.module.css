@@ -1,41 +1,46 @@
 .header {
   position: sticky;
   top: 0;
-  z-index: 50;
-  backdrop-filter: blur(20px);
-  background: rgba(7, 11, 17, 0.76);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 80;
+  backdrop-filter: blur(24px);
+  background: rgba(7, 11, 17, 0.68);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.scrolled {
+  background: rgba(7, 11, 17, 0.84);
 }
 
 .shell {
-  width: min(1240px, calc(100% - 1.4rem));
+  width: min(1320px, calc(100% - 1rem));
   margin: 0 auto;
-  min-height: 4.8rem;
+  min-height: 4.6rem;
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.85rem;
 }
 
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
 .logoBadge {
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 2.35rem;
+  height: 2.35rem;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .logoText {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 
 .search,
@@ -48,37 +53,76 @@
 .search input,
 .mobileSearch input {
   width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255,255,255,0.04);
   color: var(--text-primary);
-  padding: 0.9rem 1rem 0.9rem 2.65rem;
+  padding: 0.9rem 1rem 0.9rem 2.6rem;
   outline: none;
-  transition: border-color 160ms ease, background 160ms ease;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
+.searchOpen input,
 .search input:focus,
 .mobileSearch input:focus {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.14);
 }
 
 .searchIcon {
   position: absolute;
-  left: 1rem;
+  left: 0.95rem;
   color: var(--text-faint);
+}
+
+.searchPanel {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10, 14, 20, 0.98);
+  box-shadow: 0 25px 70px rgba(0,0,0,0.4);
+}
+
+.panelLabel {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.panelRow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.panelChip,
+.surpriseButton,
+.mobileLinkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  padding: 0.72rem 0.9rem;
 }
 
 .links {
   display: none;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
-.links a,
-.mobileMenu a {
+.links a {
   color: var(--text-secondary);
-  font-size: 0.95rem;
 }
 
 .active {
@@ -89,16 +133,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
   color: var(--text-primary);
 }
 
 .mobileMenu {
-  width: min(1240px, calc(100% - 1.4rem));
+  width: min(1320px, calc(100% - 1rem));
   margin: 0 auto 1rem;
   display: grid;
   gap: 0.8rem;
@@ -115,6 +159,12 @@
 }
 
 @media (min-width: 768px) {
+  .shell {
+    width: min(1320px, calc(100% - 1.5rem));
+  }
+}
+
+@media (min-width: 900px) {
   .links {
     display: inline-flex;
   }

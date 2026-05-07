@@ -1,24 +1,48 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Download, ExternalLink, Eye, Grid2x2, Tag } from 'lucide-react'
+import { ArrowLeft, Download, Eye, Grid2x2, Share2, Sparkles, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { getWallpaper, trackDownload } from '../utils/api.js'
+import { getWallpaper, getWallpapers, trackDownload } from '../utils/api.js'
+import WallpaperCard from '../components/WallpaperCard.jsx'
+import DevicePreviewModal from '../components/DevicePreviewModal.jsx'
+import DownloadModal from '../components/DownloadModal.jsx'
+import ShareModal from '../components/ShareModal.jsx'
 import styles from './WallpaperDetailPage.module.css'
+import { getRelatedWallpapers, inferWallpaperColors, inferMoodTags } from '../utils/wallpaperMeta.js'
 
 export default function WallpaperDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [wallpaper, setWallpaper] = useState(null)
+  const [relatedPool, setRelatedPool] = useState([])
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [downloadOpen, setDownloadOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [activeFrame, setActiveFrame] = useState('iphone')
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
 
-    getWallpaper(id)
-      .then(data => {
-        if (!cancelled) setWallpaper(data)
+    Promise.all([
+      getWallpaper(id),
+      getWallpapers({ page: 0, size: 36, sort: 'latest' }),
+    ])
+      .then(([wallpaperData, relatedData]) => {
+        if (cancelled) return
+        setWallpaper(wallpaperData)
+        setRelatedPool(relatedData.content || [])
+        document.title = `${wallpaperData.title} | WallpaperVault`
+        const metaDescription = document.querySelector('meta[name="description"]')
+        if (metaDescription) {
+          metaDescription.setAttribute('content', wallpaperData.description || `${wallpaperData.title} wallpaper on WallpaperVault`)
+        }
+        const ogImage = document.querySelector('meta[property="og:image"]')
+        if (ogImage) {
+          ogImage.setAttribute('content', wallpaperData.imageUrl)
+        }
       })
       .catch(error => {
         if (!cancelled) {
@@ -45,8 +69,11 @@ export default function WallpaperDetailPage() {
   }, [wallpaper])
 
   const tags = wallpaper?.tags?.split(',').map(item => item.trim()).filter(Boolean) || []
+  const colors = useMemo(() => inferWallpaperColors(wallpaper), [wallpaper])
+  const moods = useMemo(() => inferMoodTags(wallpaper), [wallpaper])
+  const related = useMemo(() => getRelatedWallpapers(wallpaper, relatedPool), [wallpaper, relatedPool])
 
-  const handleDownload = async () => {
+  const startDownload = async () => {
     if (!wallpaper) return
     setDownloading(true)
     try {
@@ -59,6 +86,8 @@ export default function WallpaperDetailPage() {
       document.body.appendChild(anchor)
       anchor.click()
       anchor.remove()
+      toast.success('Download started')
+      setDownloadOpen(false)
     } catch (error) {
       toast.error(error.userMessage)
     } finally {
@@ -133,22 +162,23 @@ export default function WallpaperDetailPage() {
           </div>
 
           <div className={styles.actions}>
-            <button type="button" className={styles.primaryButton} onClick={handleDownload} disabled={downloading}>
+            <button type="button" className={styles.primaryButton} onClick={() => setDownloadOpen(true)} disabled={downloading}>
               {downloading ? <div className="spinner" /> : <Download size={16} />}
-              {downloading ? 'Starting download...' : 'Download original'}
+              Download for my device
             </button>
-            <a href={wallpaper.imageUrl} target="_blank" rel="noopener noreferrer" className={styles.secondaryButton}>
-              <ExternalLink size={16} />
-              Open full image
-            </a>
+            <button type="button" className={styles.secondaryButton} onClick={() => setPreviewOpen(true)}>
+              <Sparkles size={16} />
+              Preview on device
+            </button>
+            <button type="button" className={styles.secondaryButton} onClick={() => setShareOpen(true)}>
+              <Share2 size={16} />
+              Share
+            </button>
           </div>
 
-          {tags.length > 0 && (
+          <div className={styles.metaBlocks}>
             <div className={styles.tagsBlock}>
-              <div className={styles.tagsTitle}>
-                <Tag size={15} />
-                Tags
-              </div>
+              <div className={styles.tagsTitle}><Tag size={15} /> Tags</div>
               <div className={styles.tags}>
                 {tags.map(tag => (
                   <Link key={tag} to={`/?search=${encodeURIComponent(tag)}`} className={styles.tag}>
@@ -157,9 +187,102 @@ export default function WallpaperDetailPage() {
                 ))}
               </div>
             </div>
-          )}
+
+            <div className={styles.tagsBlock}>
+              <div className={styles.tagsTitle}>Colors</div>
+              <div className={styles.tags}>
+                {colors.map(color => (
+                  <Link key={color} to={`/?color=${encodeURIComponent(color)}`} className={styles.tag}>
+                    {color}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.tagsBlock}>
+              <div className={styles.tagsTitle}>Mood</div>
+              <div className={styles.tags}>
+                {moods.map(mood => (
+                  <span key={mood} className={styles.tag}>
+                    {mood}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
+
+      <section className={styles.relatedSection}>
+        <div className={styles.relatedHeader}>
+          <h2>More like this</h2>
+          <p>Related by category, color, and tags.</p>
+        </div>
+        <div className={styles.relatedRail}>
+          {related.moreLikeThis.map(item => (
+            <div key={item.id} className={styles.relatedTile}>
+              <WallpaperCard wallpaper={item} compact />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.relatedSection}>
+        <div className={styles.relatedHeader}>
+          <h2>Same mood</h2>
+          <p>Emotionally similar wallpapers from the current collection.</p>
+        </div>
+        <div className={styles.relatedRail}>
+          {related.sameMood.map(item => (
+            <div key={item.id} className={styles.relatedTile}>
+              <WallpaperCard wallpaper={item} compact />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.relatedSection}>
+        <div className={styles.relatedHeader}>
+          <h2>Similar colors</h2>
+          <p>Built from frontend color metadata and current tags.</p>
+        </div>
+        <div className={styles.relatedRail}>
+          {related.similarColors.map(item => (
+            <div key={item.id} className={styles.relatedTile}>
+              <WallpaperCard wallpaper={item} compact />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.relatedSection}>
+        <div className={styles.relatedHeader}>
+          <h2>Similar tags</h2>
+          <p>Simple similarity logic, no expensive AI needed.</p>
+        </div>
+        <div className={styles.relatedRail}>
+          {related.similarTags.map(item => (
+            <div key={item.id} className={styles.relatedTile}>
+              <WallpaperCard wallpaper={item} compact />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <DevicePreviewModal
+        open={previewOpen}
+        wallpaper={wallpaper}
+        activeFrame={activeFrame}
+        onFrameChange={setActiveFrame}
+        onClose={() => setPreviewOpen(false)}
+      />
+      <DownloadModal
+        open={downloadOpen}
+        wallpaper={wallpaper}
+        onClose={() => setDownloadOpen(false)}
+        onDownload={startDownload}
+      />
+      <ShareModal open={shareOpen} wallpaper={wallpaper} onClose={() => setShareOpen(false)} />
     </div>
   )
 }

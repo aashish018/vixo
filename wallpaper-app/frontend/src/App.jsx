@@ -4,15 +4,17 @@ import Footer from './components/Footer.jsx'
 import HomePage from './pages/HomePage.jsx'
 import WallpaperDetailPage from './pages/WallpaperDetailPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
+import CollectionPage from './pages/CollectionPage.jsx'
 
 export default function App() {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="app-shell">
       <Navbar />
-      <main style={{ flex: 1 }}>
+      <main className="app-main">
         <Routes>
           <Route path="/"         element={<HomePage />} />
           <Route path="/wallpaper/:id" element={<WallpaperDetailPage />} />
+          <Route path="/collections/:slug" element={<CollectionPage />} />
           <Route path="/admin"    element={<AdminPage />} />
         </Routes>
       </main>

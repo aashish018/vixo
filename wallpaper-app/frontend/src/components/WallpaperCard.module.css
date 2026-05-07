@@ -4,12 +4,25 @@
   animation: rise 320ms ease both;
 }
 
+.compactCard {
+  margin-bottom: 0;
+}
+
 .media {
   position: relative;
   display: block;
   overflow: hidden;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.blurLayer {
+  width: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(24px) saturate(1.2);
+  transform: scale(1.05);
+  opacity: 0.4;
 }
 
 .image,
@@ -20,6 +33,8 @@
 }
 
 .image {
+  position: absolute;
+  inset: 0;
   opacity: 0;
   transition: opacity 220ms ease, transform 500ms ease;
 }
@@ -48,6 +63,14 @@
   opacity: 1;
 }
 
+.topRow,
+.bottomBlock {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .category,
 .featured,
 .stats span {
@@ -64,7 +87,7 @@
 }
 
 .featured {
-  margin-top: 0.5rem;
+  margin-left: auto;
 }
 
 .stats {
@@ -72,6 +95,29 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.palette {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.colorDot {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.24);
+}
+
+.colorDot[data-color="black"] { background: #0a0a0a; }
+.colorDot[data-color="white"] { background: #eceff4; }
+.colorDot[data-color="blue"] { background: #5b8bff; }
+.colorDot[data-color="purple"] { background: #8a5cf6; }
+.colorDot[data-color="red"] { background: #ef4444; }
+.colorDot[data-color="green"] { background: #22c55e; }
+.colorDot[data-color="yellow"] { background: #facc15; }
+.colorDot[data-color="orange"] { background: #fb923c; }
+.colorDot[data-color="pink"] { background: #ec4899; }
+.colorDot[data-color="cyan"] { background: #06b6d4; }
 
 .content {
   padding: 0.7rem 0.2rem 0;
